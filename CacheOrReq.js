@@ -30,7 +30,6 @@ class CacheOrReq {
             const cacheValue = self.getCache(requestOptionsSerialised);
             if(cacheValue) {
                 const updateDiff = (new Date() - cacheValue.lastUpdate);
-                console.log(updateDiff);
                 if(updateDiff >= this.cacheTtl) {
                     self.fetch(requestOptionsSerialised, requestOptions);
                 }
@@ -54,11 +53,9 @@ class CacheOrReq {
         return new Promise((resolve, reject) => {
             request(requestOptions).then((response) => {
                 self.setCache(requestId, response, false);
-                console.log('cache updated');
                 resolve();
             }).catch((error) => {
                 self.setCache(requestId, false, error);
-                console.log('cache updated with error');
                 resolve();
             });
         });
