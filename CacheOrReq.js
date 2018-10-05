@@ -5,6 +5,27 @@ class CacheOrReq {
         this.cacheTtl = cacheTtl || 1000;
         this.cacheNotFound = cacheNotFound;
         this.cache = {};
+        this.callbacks = {
+            fetchSuccess: [],
+            fetchError: [],
+            update: [],
+            miss: [],
+            hit: []
+        };
+    }
+    addCallback(type, cb) {
+        if(this.callbacks[type]) {
+            this.callbacks[type].push(cb);
+        } else {
+            throw new Error('invalid callback type ' + type);
+        }
+    }
+    triggerEvent(type, data) {
+        if(this.callbacks[type] && this.callbacks[type].length > 0) {
+            for(let cb of this.callbacks[type]) {
+                cb(data);
+            }
+        }
     }
     getCache(id) {
         if(this.cache[id]) {
@@ -38,6 +59,7 @@ class CacheOrReq {
                 } else if(cacheValue.error) {
                     reject(cacheValue);
                 }
+                self.triggerEvent('hit', {requestId: requestOptionsSerialised});
             } else {
                 self.fetch(requestOptionsSerialised, requestOptions).then(() => {
                     // ;-)
@@ -45,6 +67,7 @@ class CacheOrReq {
                 }).catch(() => {
                     self.get(requestOptions).then(resolve).catch(reject);
                 });
+                self.triggerEvent('miss', {requestId: requestOptionsSerialised});
             }
         });
     }
@@ -54,6 +77,7 @@ class CacheOrReq {
             request(requestOptions).then((response) => {
                 self.setCache(requestId, response, false);
                 resolve();
+                self.triggerEvent('fetchSuccess', {response: response, requestId: requestId});
             }).catch((error) => {
                 let lastCacheValue = self.getCache(requestId);
                 self.setCache(
@@ -63,6 +87,7 @@ class CacheOrReq {
                     error
                 );
                 resolve();
+                self.triggerEvent('fetchError', {error: error, requestId: requestId});
             });
         });
     }
