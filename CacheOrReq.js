@@ -55,7 +55,13 @@ class CacheOrReq {
                 self.setCache(requestId, response, false);
                 resolve();
             }).catch((error) => {
-                self.setCache(requestId, false, error);
+                let lastCacheValue = self.getCache(requestId);
+                self.setCache(
+                    requestId,
+                    // if the remote api response with an array but we had already data we shouldn't overwrite it
+                    (lastCacheValue && lastCacheValue.content?lastCacheValue.content:false),
+                    error
+                );
                 resolve();
             });
         });

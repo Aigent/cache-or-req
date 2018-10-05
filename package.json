@@ -1,6 +1,6 @@
 {
   "name": "cache-or-req",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A very simple cache for request-promise operations, primary goal is to return always a value after the first real fetch. The library tried to re-fetch after TTL is reached but returns immediately, the next request within the TTL time will return the updated result. This library should primarily be used for accessing configuration via APIs and ensure that services get always some kind of configuration.",
   "main": "CacheOrReq.js",
   "scripts": {
