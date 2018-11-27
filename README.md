@@ -11,7 +11,10 @@ This library is a very simple wrapper around request-promise (https://www.npmjs.
 ```javascript
 const CacheOrReq = require('./CacheOrReq');
 
-let cacheOrReq = new CacheOrReq(1000);
+let cacheOrReq = new CacheOrReq(
+    1000, // refresh cache in background as soon as the item gets older than one second
+    1000 * 60 * 60 // delete cache items as soon as they got older than 1 hour without accessing it
+);
 cacheOrReq.get({ // request-promise options
     url: TEST_URL,
     method: 'GET'

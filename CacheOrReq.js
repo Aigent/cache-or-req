@@ -1,8 +1,15 @@
 const request = require('request-promise');
 
 class CacheOrReq {
-    constructor(cacheTtl, cacheNotFound) {
+    /**
+     * initialises a new instance of the cache
+     *
+     * @param cacheTtl defines the time after a cached item shall be refreshed
+     * @param garbageCollectionTtl defines the time after a cached item shall get deleted
+     */
+    constructor(cacheTtl, garbageCollectionTtl) {
         this.cacheTtl = cacheTtl || 1000;
+        this.garbageCollectionTtl = garbageCollectionTtl || 1000 * 60 * 60;
         this.cache = {};
         this.locks = {};
         this.callbacks = {
@@ -55,9 +62,23 @@ class CacheOrReq {
      */
     getCache(id) {
         if(this.cache[id]) {
+            this.cache[id].lastAccess = new Date();
             return this.cache[id];
         } else {
             return false;
+        }
+    }
+
+    /**
+     * clears a cache item, it's used by a setInterval from setCache to clear items after a certain amount of time
+     * to ensure that it isn't leaking memory too much
+     *
+     * @param id
+     */
+    clearCacheItem(id) {
+        if((this.cache[id].lastAccess - new Date()) >= this.garbageCollectionTtl) {
+            clearInterval(this.cache[id].timer);
+            delete this.cache[id];
         }
     }
 
@@ -69,10 +90,16 @@ class CacheOrReq {
      * @param error
      */
     setCache(id, data, error) {
+        const self = this;
+        if(this.cache[id] && this.cache[id].timer) {
+            clearInterval(this.cache[id].timer);
+        }
         this.cache[id] = {
             lastUpdate: new Date(),
+            lastAccess: new Date(),
             content: data,
-            error: error
+            error: error,
+            timer: setInterval(() => { self.clearCacheItem(id) }, 60000)
         };
     }
 
@@ -166,13 +193,17 @@ class CacheOrReq {
         const self = this;
         return new Promise((resolve, reject) => {
             if(self.lock(requestId)) {
+                const lastCacheValue = self.getCache(requestId);
                 request(requestOptions).then((response) => {
-                    self.setCache(requestId, response, false);
+                    self.setCache(
+                        requestId,
+                        response,
+                        (lastCacheValue && lastCacheValue.error?lastCacheValue.error:false)
+                    );
                     resolve();
                     self.triggerEvent('fetchSuccess', {response: response, requestId: requestId});
                     self.unlock(requestId);
                 }).catch((error) => {
-                    let lastCacheValue = self.getCache(requestId);
                     self.setCache(
                         requestId,
                         // if the remote api response with an array but we had already data we shouldn't overwrite it
