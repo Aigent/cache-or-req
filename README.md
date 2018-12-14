@@ -1,4 +1,6 @@
 # cache-or-req 
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FAigent%2Fcache-or-req.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FAigent%2Fcache-or-req?ref=badge_shield)
+
 
 A very simple cache for request-promise operations, primary goal is to return always a value after the first real fetch. The library tried to re-fetch after TTL is reached but returns immediately, the next request within the TTL time will return the updated result. This library should primarily be used for accessing configuration via APIs and ensure that services get always some kind of configuration.
 
@@ -30,3 +32,7 @@ cacheOrReq.get({ // request-promise options
 cacheOrReq.clearCache();
 
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FAigent%2Fcache-or-req.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FAigent%2Fcache-or-req?ref=badge_large)
